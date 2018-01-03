@@ -1,4 +1,5 @@
 import datetime
+from util import converte_monetario_float, formata_nome_proprio
 class FabricaPagamento():
 
         tipos_dados = ('texto','data_hora','monetario','inteiro')
@@ -7,6 +8,7 @@ class FabricaPagamento():
                             {'encoding':'iso-8859-1',
                              'separador':';',
                              'formato_data':'%d/%m/%y',
+                             'formato_monetario':'Real', \
                              'campos':(
                                  ('municipio','texto'), \
                                  ('unidade','texto'),  \
@@ -35,28 +37,33 @@ class FabricaPagamento():
         def criar_pagamento(cls,linha = '',versao_formato = 0):
             separador = cls.VersoesFormatArqMacro[versao_formato]["separador"]
             #para cada linha:retirar os espacos em branco das extremidades
-            #Retira as aspas e transforma a linha numa lista, por meio do
-            #caracter 'separador'
+            #Retira as aspas e transforma a linha numa lista, por meio do caracter 'separador'
             valores_campos = linha.strip().replace('"','').split(separador)
+            #Pega o nome dos campos contido no formato do arquivo
             nomes_campos = cls.VersoesFormatArqMacro[versao_formato]["campos"]
-            print("tam valores_campos %d tam nomes_campos %d"%   (len(valores_campos) , len(nomes_campos)))
+            #verifica se a quantidade de campos são identicas, se não forem o formato do arquivo eh incompativel
             if len(valores_campos) != len(nomes_campos):
                 raise FormatoArqInvalido("Quantidade de campos do formato nao coincide com a quantidade de campos no arquivo lido")
             else:
+                #Dicionario utilizado para criar PagamentoMacro
                 pagamento_campos = {}
+                
                 for indice,(campo,tipo) in enumerate(nomes_campos):
                        pagamento_campos[campo] = cls.converte_campo(tipo,valores_campos[indice])
-            print(pagamento_campos)
+                       
+            #print(pagamento_campos)
+            p = PagamentoMacro(**pagamento_campos)
+            return p    
 
         @classmethod
-        def converte_campo(cls,tipo_campo,valor_campo):
+        def converte_campo(cls,tipo_campo,valor_campo, versao_formato=0):
             if tipo_campo in (cls.tipos_dados):
                 if tipo_campo == cls.tipos_dados[0]: #tipo_campo = 'texto'?
                     return valor_campo.strip()
                 elif tipo_campo == cls.tipos_dados[1]: #tipo_campo = 'data_hora'?
-                    return datetime.datetime.strptime(valor_campo,"%d/%m/%y")
+                    return datetime.datetime.strptime(valor_campo,cls.VersoesFormatArqMacro[versao_formato]["formato_data"])
                 elif tipo_campo == cls.tipos_dados[2]: #tipo_campo = 'monetario'?
-                    return float(valor_campo)
+                    return converte_monetario_float(valor_campo, cls.VersoesFormatArqMacro[versao_formato]["formato_monetario"])
                 elif tipo_campo == cls.tipos_dados[3]: #tipo_campo = 'inteiro'?
                     return int(valor_campo)
             else:
@@ -65,6 +72,7 @@ class FabricaPagamento():
 
 class FormatoArqInvalido(Exception):
     pass
+    
 class TipoDadosInvalido(Exception):
     pass
 
@@ -110,15 +118,18 @@ class PagamentoMacro:
              self.processo = processo
              self.rp = processo
              self.unidade = unidade
-             self.valor_bruto = PyOsString_to_double(valor_bruto)
-             self.valor_liquido = PyOsString_to_double(valor_bruto)
-             self.valor_retencao = PyOsString_to_double(valor_retencao)
+             self.valor_bruto = valor_bruto
+             self.valor_liquido = valor_bruto
+             self.valor_retencao = valor_retencao
              self.municipio = municipio
              self.historico = historico
     def __str__(self):
-             texto = "\nData Pagamento: " + self.data_pagamento
-             texto += "\nMunicipio: " + self.municipio
-             texto += "\nValor Bruto: " + self.valor_bruto + "\n"
+             texto = "Data Pagamento: " + self.data_pagamento.strftime('%d/%m/%Y')
+             texto += "\nMunicipio: " + formata_nome_proprio(self.municipio)
+             texto += "\nUnidade: " + formata_nome_proprio(self.unidade)
+             texto += "\nCredor: " + formata_nome_proprio(self.credor)
+             texto += "\nValor Bruto: " + str(self.valor_bruto)
+             return texto
 
 class ArquivoPagamentosMacro():
     """Classe para tratar arquivo de pagamentos, no formato cvs, gerado pelo sistema macros"""
@@ -143,21 +154,8 @@ class ArquivoPagamentosMacro():
     def __next__(self):
         linha = self.arquivo.readline()
         if linha:
-            #separador = VersoesFormatArqMacro[self.versao_formato]["separador"]
-            #para cada linha:retirar os espacos em branco das extremidades
-            #Retira as aspas e transforma a linha numa lista, por meio do
-            #caracter 'separador'
-            #valores_campos = linha.strip().replace('"','').split(separador)
-            #nomes_campos = VersoesFormatArqMacro[self.versao_formato]["campos"]
-            #print("tam valores_campos %d tam nomes_campos %d"%   (len(valores_campos) , len(nomes_campos)))
-            #if len(valores_campos) != len(nomes_campos):
-            #       raise FormatoArqInvalido("Quantidade de campos do formato nao coincide com a quantidade de campos no arquivo lido")
-            #else:
-                #dados_pagamento={}
-                #for i in range(len(nomes_campos)):
-                #   dados_pagamento[nomes_campos[i]] = valores_campos[i]
-                #return dados_pagamento
-             FabricaPagamento.criar_pagamento(linha,self.versao_formato)
+            
+             return FabricaPagamento.criar_pagamento(linha,self.versao_formato)
 
         else:
             raise StopIteration
