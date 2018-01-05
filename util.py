@@ -13,19 +13,15 @@ def formata_nome_proprio (nome, tamanho_minimo = 4):
             nome_proprio.append(palavra)
         return " ".join(nome_proprio)
 def formata_nome_empresa(nome):
-    padrao_ltda = r'.*((L|l)(T|t)(D|d)(A|a)\.?)(\s*|(\s*(-)?\s*(M|m)(E|e)\s*))'
+    padrao_ltda = r'(((L|l)(T|t)(D|d)(A|a)\.?)((\s*)$|(\s*-?\s*(M|m)(E|e)\s*)$))$'
     nome_aux = formata_nome_proprio(nome)
-    achado = re.match(padrao_ltda, nome_aux)
-    achado1 = re.search(padrao_ltda, nome_aux)
-    if not achado1  is None:
-        print(nome_aux)
-        print(achado1.group(1), achado1.group(5), achado1.group(7))
-        print(nome_aux[achado1.start():achado1.end()])
-        
-    if re.match(padrao_ltda, nome_aux):
-        return 1
-    else:
-        return 0
+    achado = re.search(padrao_ltda, nome_aux)
+    print("nome_aux: ", nome_aux)
+    if not achado  is None:
+       
+        print('group + group', achado.group(0))
+    
+    
                                     
 def converte_monetario_float(valor_monetario, descritor_moeda="Real"):
     """ Converte um valor monetario, no formato indicado no parametro 'descritor_moeda', para um valor float"""
