@@ -1,5 +1,5 @@
 # encoding: utf-8
-import os, shutil, sys, re, time
+import os, sys, re
 
 from unicodedata import normalize
 class Pasta():

@@ -1,13 +1,13 @@
-marcos ltda
-avai l tda
-jonas ltda.
-mercearia ltda.-me
-avenida LTDA-ME
-BRIGIDA LTDA - ME 
-MANINHA ltda - me 
-maluquina ltda . me 
-mania lTdA - Me
-loja LtDa . mE
-maravilh LTDA.ME
-peru ltda-me
-diga ai LtDa.me
+marcos ltda;1
+avai l tda;0
+jonas ltda.;1
+mercearia ltda.-me;1
+avenida LTDA-ME;1
+BRIGIDA LTDA - ME;1 
+MANINHA ltda - me;1 
+maluquina ltda . me;0 
+mania lTdA - Me;1
+loja LtDa . mE;0
+maravilh LTDA.ME;1
+peru ltda-me;1
+diga ai LtDa.me;1
