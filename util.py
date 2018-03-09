@@ -34,6 +34,7 @@ def formata_nome_empresa(nome, tamanho_minimo = 3):
         nome_aux = re.sub(padrao_ltda, tipo_empresarial, nome_aux)
     
     return nome_aux
+
 def formatar_numero(number, precision=0, group_sep='.', decimal_sep=','):
 
     number = ('%.*f' % (max(0, precision), number)).split('.')
@@ -102,23 +103,7 @@ def eh_valor_monetario(valor_moeda="",descritor_moeda="Real"):
 	else:
 		return 0
 
-def teste_eh_valor_monetario():
-    arquivo = open('teste_monetario')
-    for linha in arquivo:
-        lista = linha.strip().split(";")
-        if eh_valor_monetario(lista[0]) != int(lista[1]):
-            print("Erro -> {}".format(lista[0]))
-        else:
-            print("Ok -> {}".format(lista[0]))
-            if int(lista[1]) == 1:
-                print(converte_monetario_float(lista[0], "Real"))
-
-def teste_nome_empresa():
-    arquivo = open('teste_nome_empresa.txt')
-    for linha in arquivo:
-        lst = linha.split(";")
-        print("linha->", lst[0].strip())
-        print("formata_nome_empres->", formata_nome_empresa(lst[0]))
     
 if __name__ == "__main__":
-    teste_nome_empresa()
+    #teste_nome_empresa()
+    teste_eh_valor_monetario()

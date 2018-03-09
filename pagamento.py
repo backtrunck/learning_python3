@@ -194,7 +194,62 @@ class ArquivoPagamentoMacroEscritor():
             #Pega o nome dos campos contido no formato do arquivo
             self.csvWriter.writerow(pagamento)
             
+class ArquivoPagamentosMacroLeitor(ArquivoPagamentoLeitor):
+    """Classe para tratar arquivo de pagamentos, no formato cvs, gerado pelo sistema macros"""
+    def __init__(self,caminho_arquivo,versao_formato=0,tem_cabecalho=1):
+        """Abre o arquivo de pagamentos, utilizando a versao do formato"""
+        #chama o init do pai
+        super().__init__(caminho_arquivo, encoding=VersoesFormatArq[versao_formato]["encoding"])
+        #lê o csv, utilizando o separador de VersoesFormato do Arquivo de Pagamento
+        self.arquivo_conteudo = csv.reader(self.arquivo, delimiter= VersoesFormatArq[versao_formato]['separador'])
+        #Guarda no atributo a versao do formato do arquivo cvs gerado pelo sistema macros
+        # onde estão as informações dos pagamentos
+        self.versao_formato = versao_formato
+        #tem_cabecalho informa se o arquivo tem um cabecalho
+        #que deve ser tratado previamente, por padrão tem (=1)
+        if VersoesFormatArq[versao_formato]['tem_cabecalho']:
+            #Guarda o cabecalho
+            self.cabecalho = next(self.arquivo_conteudo)
+        else:
+            self.cabecalho = None
+
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        """Pega do arquivo os dados do proximo pagamento """
+        #pega proxima linha (list com os dados de cada campo)
+        linha = next(self.arquivo_conteudo)
+        #se a linha não for vazia cria um pagamento e retorna-o
+        if linha:
+             return self.obter_proximo_pagamento(linha)
+
+        else:
+           #fim da iteração
+            raise StopIteration
+
+    def obter_proximo_pagamento(self, valores_campos):
+        
+        #Pega o nome dos campos contido no formato do arquivo
+        nomes_campos = VersoesFormatArq[self.versao_formato]["campos"]
+        #verifica se a quantidade de campos são identicas, se não forem o formato do arquivo eh incompativel
+        if len(valores_campos) != len(nomes_campos):
+            raise FormatoArqInvalidoExcp("Quantidade de campos do formato nao coincide com a quantidade de campos no arquivo lido")
+        else:
+            #Dicionario utilizado para criar PagamentoMacro
+            pagamento_campos = {}
             
+            for indice,(campo,tipo) in enumerate(nomes_campos):
+                   #Preenche o dicionario com os nomes dos campos e valores já com as devidas conversões
+                   #Notar que é imprescindível que a ordem da lista nomes_campos deve ser igual a ordem
+                   #em valores_campos
+                   pagamento_campos[campo] = converte_campo(tipo,valores_campos[indice])
+                   
+        #cria o pagamento a partir do dicionario preenchido
+        p = PagamentoMacro(**pagamento_campos)
+        return p
+
 class ArquivoPagamentoTcmBaLeitor(ArquivoPagamentoLeitor):
     def __init__(self, caminho_arquivo, versao_formato=1):
         #Abre o arquivo xls
@@ -296,70 +351,17 @@ class ArquivoPagamentoTcmBaLeitor(ArquivoPagamentoLeitor):
             pagamento_campos["rp"] = pagamento_campos['RP_Contrato'][posicao1 + len('RP:'):posicao2]
             pagamento_campos["contrato"] = pagamento_campos['RP_Contrato'][posicao2 + len('Contrato:'):]
             
-class ArquivoPagamentosMacroLeitor(ArquivoPagamentoLeitor):
-    """Classe para tratar arquivo de pagamentos, no formato cvs, gerado pelo sistema macros"""
-    def __init__(self,caminho_arquivo,versao_formato=0,tem_cabecalho=1):
-        """Abre o arquivo de pagamentos, utilizando a versao do formato"""
-        #chama o init do pai
-        super().__init__(caminho_arquivo, encoding=VersoesFormatArq[versao_formato]["encoding"])
-        #lê o csv, utilizando o separador de VersoesFormato do Arquivo de Pagamento
-        self.arquivo_conteudo = csv.reader(self.arquivo, delimiter= VersoesFormatArq[versao_formato]['separador'])
-        #Guarda no atributo a versao do formato do arquivo cvs gerado pelo sistema macros
-        # onde estão as informações dos pagamentos
-        self.versao_formato = versao_formato
-        #tem_cabecalho informa se o arquivo tem um cabecalho
-        #que deve ser tratado previamente, por padrão tem (=1)
-        if VersoesFormatArq[versao_formato]['tem_cabecalho']:
-            #Guarda o cabecalho
-            self.cabecalho = next(self.arquivo_conteudo)
-        else:
-            self.cabecalho = None
-
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        """Pega do arquivo os dados do proximo pagamento """
-        #pega proxima linha (list com os dados de cada campo)
-        linha = next(self.arquivo_conteudo)
-        #se a linha não for vazia cria um pagamento e retorna-o
-        if linha:
-             return self.obter_proximo_pagamento(linha)
-
-        else:
-            #fim da iteração
-            raise StopIteration
-    def obter_proximo_pagamento(self, valores_campos):
-        
-        #Pega o nome dos campos contido no formato do arquivo
-        nomes_campos = VersoesFormatArq[self.versao_formato]["campos"]
-        #verifica se a quantidade de campos são identicas, se não forem o formato do arquivo eh incompativel
-        if len(valores_campos) != len(nomes_campos):
-            raise FormatoArqInvalidoExcp("Quantidade de campos do formato nao coincide com a quantidade de campos no arquivo lido")
-        else:
-            #Dicionario utilizado para criar PagamentoMacro
-            pagamento_campos = {}
-            
-            for indice,(campo,tipo) in enumerate(nomes_campos):
-                   #Preenche o dicionario com os nomes dos campos e valores já com as devidas conversões
-                   #Notar que é imprescindível que a ordem da lista nomes_campos deve ser igual a ordem
-                   #em valores_campos
-                   pagamento_campos[campo] = converte_campo(tipo,valores_campos[indice])
-                   
-        #cria o pagamento a partir do dicionario preenchido
-        p = PagamentoMacro(**pagamento_campos)
-        return p    
+    
 def testePagamentoMacro():
-    a = ArquivoPagamentosMacroLeitor(r"teste.pagamento_cheio.csv",versao_formato=0)
+    a = ArquivoPagamentosMacroLeitor(r"./arquivos_testes/teste.pagamento_cheio.csv",versao_formato=0)
     for pagamento in a:
         print(pagamento)
 
 def testePagamentoTcmBa():
         total_pagamento=0.0
         qt_pagamento = 0
-        b = ArquivoPagamentoMacroEscritor('/home/lcreina/Documentos/programacao/python3/teste.pagamento.macro.escrito.csv')
-        a = ArquivoPagamentoTcmBaLeitor('/home/lcreina/Documentos/programacao/python3/ConsultaPagamentoRelsao.felix.xls')
+        b = ArquivoPagamentoMacroEscritor('./arquivos_testes/teste.pagamento.macro.escrito.csv')
+        a = ArquivoPagamentoTcmBaLeitor('./arquivos_testes/ConsultaPagamentoRelsao.felix.xls')
         b.escrever_cabecalho()
         for pag in a:
             print(pag)
