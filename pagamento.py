@@ -73,6 +73,13 @@ VersoesFormatArq =( \
                      },)
 
 def converte_campo(tipo_campo,valor_campo, versao_formato=0):
+    """ converte um valor(valor_campo) e o padrão especificado (versao_format0)
+        parametros:
+            tipo_campo (sring): informa o tipo do campo passado
+            valor_campo (string): valor a ser formatado
+            versão_formato (int): indice para localizar o formato do campo
+            retorno (int/float/datetime): retorna o valor convertido 
+    """
     if tipo_campo in (tipos_dados):
         if tipo_campo == tipos_dados[0]: #tipo_campo = 'texto'?
             return valor_campo.strip()
@@ -173,33 +180,35 @@ class PagamentoMacro:
         return valor
              
 class ArquivoPagamentoLeitor():
+    """ Classe para interfacear com o arquivo que contem os dados de pagamento """
     def __init__(self, caminho_arquivo, versao_formato=0):
         self.arquivo = open(caminho_arquivo, 'r', encoding=VersoesFormatArq[versao_formato]["encoding"])
         
 class ArquivoPagamentoMacroEscritor():
-        def __init__(self, caminho_arquivo, versao_formato=0, mantem_conteudo=0):
-            self.versao_formato = versao_formato
-            if mantem_conteudo:
-                self.arquivo = open(caminho_arquivo, 'rw', encoding=VersoesFormatArq[versao_formato]["encoding"])
-            else:
-                self.arquivo = open(caminho_arquivo, 'w', encoding=VersoesFormatArq[versao_formato]["encoding"])
-            #cria um escritor de csv
-            self.csvWriter = csv.writer(self.arquivo, quoting = csv.QUOTE_ALL, delimiter = VersoesFormatArq[self.versao_formato]['separador'])
+    """ Classe para interfacear com o arquivo que vai receber as informações de pagamento """
+    def __init__(self, caminho_arquivo, versao_formato=0, mantem_conteudo=0):
+        self.versao_formato = versao_formato
+        if mantem_conteudo:
+            self.arquivo = open(caminho_arquivo, 'rw', encoding=VersoesFormatArq[versao_formato]["encoding"])
+        else:
+            self.arquivo = open(caminho_arquivo, 'w', encoding=VersoesFormatArq[versao_formato]["encoding"])
+        #cria um escritor de csv
+        self.csvWriter = csv.writer(self.arquivo, quoting = csv.QUOTE_ALL, delimiter = VersoesFormatArq[self.versao_formato]['separador'])
             
-        def escrever_cabecalho(self):
-            
-            self.csvWriter.writerow([campo[0] for campo in VersoesFormatArq[self.versao_formato]['campos']])
+    def escrever_cabecalho(self):
+        """Escreve uma linha no arquivo com o nome de cada campo em VersoesFormatoArq """
+        self.csvWriter.writerow([campo[0] for campo in VersoesFormatArq[self.versao_formato]['campos']])
              
-        def escrever_pagamento(self, pagamento):
-            #Pega o nome dos campos contido no formato do arquivo
-            self.csvWriter.writerow(pagamento)
+    def escrever_pagamento(self, pagamento):
+        #Pega o nome dos campos contido no formato do arquivo
+        self.csvWriter.writerow(pagamento)
             
 class ArquivoPagamentosMacroLeitor(ArquivoPagamentoLeitor):
     """Classe para tratar arquivo de pagamentos, no formato cvs, gerado pelo sistema macros"""
     def __init__(self,caminho_arquivo,versao_formato=0,tem_cabecalho=1):
         """Abre o arquivo de pagamentos, utilizando a versao do formato"""
         #chama o init do pai
-        super().__init__(caminho_arquivo, encoding=VersoesFormatArq[versao_formato]["encoding"])
+        super().__init__(caminho_arquivo, versao_formato)
         #lê o csv, utilizando o separador de VersoesFormato do Arquivo de Pagamento
         self.arquivo_conteudo = csv.reader(self.arquivo, delimiter= VersoesFormatArq[versao_formato]['separador'])
         #Guarda no atributo a versao do formato do arquivo cvs gerado pelo sistema macros
@@ -352,30 +361,7 @@ class ArquivoPagamentoTcmBaLeitor(ArquivoPagamentoLeitor):
             pagamento_campos["contrato"] = pagamento_campos['RP_Contrato'][posicao2 + len('Contrato:'):]
             
     
-def testePagamentoMacro():
-    a = ArquivoPagamentosMacroLeitor(r"./arquivos_testes/teste.pagamento_cheio.csv",versao_formato=0)
-    for pagamento in a:
-        print(pagamento)
-
-def testePagamentoTcmBa():
-        total_pagamento=0.0
-        qt_pagamento = 0
-        b = ArquivoPagamentoMacroEscritor('./arquivos_testes/teste.pagamento.macro.escrito.csv')
-        a = ArquivoPagamentoTcmBaLeitor('./arquivos_testes/ConsultaPagamentoRelsao.felix.xls')
-        b.escrever_cabecalho()
-        for pag in a:
-            print(pag)
-            b.escrever_pagamento(pag)
-            total_pagamento += pag.valor_bruto
-            qt_pagamento +=1
-        
-        if round(total_pagamento, 2) != round(float(a.valor_bruto_total), 2) :
-            print('Valor_Bruto Lido:', total_pagamento, 'Valor_total_informado no arquivo:', a.valor_bruto_total)
-        if qt_pagamento != a.qt_pagamento:
-            print('Qt de pagamentos lido:', qt_pagamento, 'Qt de pagamentos informados no arquivo', a.qt_pagamento)
-        
-        print('Total de Pagamentos lidos: %d\nValor Total de Pagamento %s'%(qt_pagamento, formatar_numero(total_pagamento, precision=2)))
-        
+       
 
 if __name__ == "__main__":
    #testePagamentoMacro()
