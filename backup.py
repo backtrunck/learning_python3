@@ -5,11 +5,21 @@ import shutil
 from utilitarios.terminal import ProgressMeter
 from unicodedata import normalize
 
+class PastaInexistente(Exception):
+    
+    
+    def __init__(self,caminho):
+        super().__init__("Pasta '{}' inexistente".format(caminho))
+
 class Pasta():
 
-    def __init__(self,caminho):
-        self.caminho = os.path.abspath(caminho)
 
+    def __init__(self,caminho):
+        if os.path.exists(caminho):
+            self.caminho = os.path.abspath(caminho)
+        else:
+            raise PastaInexistente(os.path.abspath(caminho))
+            
     def obter_caminho(self):
         """ Mostra o caminho da pasta"""
         return self.caminho
@@ -195,7 +205,7 @@ def obter_nome_normalizado(arquivo, caracter_substitutivo='.'):
         
         #coloca o nome em letras minusculas e troca espaços por pontos        
         nome_base_arquivo = nome_base_arquivo.lower()
-        
+        #troca espaço em branco,traço e underline por ponto
         nome_base_arquivo = re.sub(r'[\s\-_]', caracter_substitutivo, \
                                    nome_base_arquivo)
         

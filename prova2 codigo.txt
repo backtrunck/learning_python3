@@ -1,0 +1,103 @@
+#include <Wire.h>
+#include "rgb_lcd.h"
+#define POSINICIAL    b00000001;  //bit posição inicial
+#define POSENCHER     b00000010;  //bit posição enchimento
+#define POSTAMPAR     b00000100;  //bit posição tampa
+#define POSRETIRAR    b00001000;  //bit posição remoção
+#define GARRAFACHEIA  b00010000;  //bit teste garrafa cheia
+#define GARRAFATAMPA  b00100000;  //bit teste garrafa tampada
+#define GARRAFADISP   b01000000;  //bit testa se tem garrafa
+
+#define AVANPISTAO    b00000001;  //bit indica avanço do pistão
+#define ACIONABOMBA   b00000010;  //bit indica funcionamento da bomba
+
+  
+int PosInicial = 0; //Posição 1 da esteira, garrafa empurrada pelo pistão
+int PosEncher = 0; //Posição 2 da esteira, garrafa esperando enchimento
+int PosTampar = 0; //Posição 3 da esteira, garrafa esperando tampa
+int PosRetirar = 0; //Posição 4 da esteira, garrafa sendo removida pelo robô
+int GarrafaDis = 0; //Mostra Garrafa disponível no pistão
+int AvanPistao = 0; //Sinalizador de pistão acionado
+int EsteiraOn = 0; //Simboliza Esteira Funcionando
+//^Leds
+
+int Liga; //Botão que aciona Pistão
+
+char buff[4];
+
+
+/*void DisplayPos(int PosInicial, int PosEncher, int PosTampar, int PosRetirar){
+  digitalWrite(5, PosInicial);
+  digitalWrite(6, PosEncher);
+  digitalWrite(7, PosTampar);
+  digitalWrite(8, PosRetirar);  
+}*/
+void AvanEsteira(){
+  //avança esteira 1 metro
+}
+void Pausa(int tempo){
+  //define quanto tempo de pausa tera cada ação
+}
+void EnviaPos(){
+    if (Serial.available()){
+    sprintf(buff,"%1d%1d%1d%1d",PosInicial,PosEncher,PosTampar,PosRetirar);
+    Serial.println(buff);
+   }
+}
+void MovePos(){
+  //a cada interação move a lampada uma posição à frente.
+}
+void AciRetPistao(){
+  //Acionamento do pistão de Posição Inicial
+  PORTB |= AVANPISTAO;
+  Pausa(2000);
+  PORTB &= !AVANPISTAO;
+}
+void AcionaBomba(){
+  if !(PORTB & GARRAFACHEIA){
+    PORTB |= ACIONABOMBA;
+    Pausa(5000);
+    PORTB &= ^ACIONABOMBA;
+  }
+}
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(5, OUTPUT);
+  pinMode(6, OUTPUT);
+  pinMode(7, OUTPUT);
+  pinMode(8, OUTPUT);
+  EnviaPos();
+
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+  
+  if (EsteiraOn == 0){
+    if (PORTD & POSINICIAL){
+    //Função atuar pistão
+    AciRetPistao();
+    }
+    if (PORTD & POSENCHER){
+      //Função encher garrafa
+      
+    }
+    if (PosTampar != 0){
+    //Função tampa garrafa
+    }
+    if (PosRetirar != 0){
+    //Função retirar garrafa
+    }
+    EnviaPos();
+    /*Função ligar esteira{
+    //EsteiraOn = 1;
+    //digitalWrite(9,EsteiraOn);
+    }
+    */
+    EnviaPos();
+    
+  }
+  
+}
